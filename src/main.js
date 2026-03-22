@@ -25,7 +25,7 @@ function smoothScrollByGalleryCard() {
   });
 }
 
-form.addEventListener('submit', event => {
+form.addEventListener('submit', async event => {
   event.preventDefault();
 
   const query = event.currentTarget.elements['search-text'].value.trim();
@@ -44,40 +44,45 @@ form.addEventListener('submit', event => {
   render.clearGallery();
   render.hideLoadMoreButton();
   render.showLoader();
-  pixabay
-    .getImagesByQuery(currentQuery, currentPage)
-    .then(data => {
-      if (data.hits.length === 0) {
-        iziToast.error({
-          title: 'Error',
-          message:
-            'Sorry, there are no images matching your search query. Please try again!',
-        });
-        render.hideLoadMoreButton();
-        return;
-      }
-      pages = Math.ceil(data.totalHits / 15);
-      render.renderImages(data.hits);
-      smoothScrollByGalleryCard();
 
-      if (currentPage < pages) {
-        render.showLoadMoreButton();
-      }
-    })
-    .catch(() => {
+  try {
+    const data = await pixabay.getImagesByQuery(currentQuery, currentPage);
+
+    if (data.hits.length === 0) {
       iziToast.error({
         title: 'Error',
-        message: 'Failed to fetch images. Please try again later.',
+        message:
+          'Sorry, there are no images matching your search query. Please try again!',
       });
-    })
-    .finally(() => {
-      render.hideLoader();
+      render.hideLoadMoreButton();
+      return;
+    }
+
+    pages = Math.ceil(data.totalHits / 15);
+    render.renderImages(data.hits);
+
+    if (currentPage < pages) {
+      render.showLoadMoreButton();
+    } else {
+      iziToast.info({
+        title: 'Info',
+        message: "We're sorry, but you've reached the end of search results.",
+      });
+      render.hideLoadMoreButton();
+    }
+  } catch {
+    iziToast.error({
+      title: 'Error',
+      message: 'Failed to fetch images. Please try again later.',
     });
+  } finally {
+    render.hideLoader();
+  }
 
   form.reset();
 });
 
-loadMoreButton.addEventListener('click', () => {
+loadMoreButton.addEventListener('click', async () => {
   if (currentPage >= pages) {
     iziToast.info({
       title: 'Info',
@@ -87,29 +92,38 @@ loadMoreButton.addEventListener('click', () => {
     return;
   }
 
-  currentPage++;
-  render.showLoader();
-  pixabay
-    .getImagesByQuery(currentQuery, currentPage)
-    .then(data => {
-      render.renderImages(data.hits);
-      smoothScrollByGalleryCard();
+  const nextPage = currentPage + 1;
 
-      if (currentPage >= pages) {
-        iziToast.info({
-          title: 'Info',
-          message: "We're sorry, but you've reached the end of search results.",
-        });
-        render.hideLoadMoreButton();
-      }
-    })
-    .catch(() => {
-      iziToast.error({
-        title: 'Error',
-        message: 'Failed to fetch images. Please try again later.',
+  render.hideLoadMoreButton();
+  render.showLoader();
+
+  try {
+    const data = await pixabay.getImagesByQuery(currentQuery, nextPage);
+
+    currentPage = nextPage;
+
+    render.renderImages(data.hits);
+    smoothScrollByGalleryCard();
+
+    if (currentPage >= pages) {
+      iziToast.info({
+        title: 'Info',
+        message: "We're sorry, but you've reached the end of search results.",
       });
-    })
-    .finally(() => {
-      render.hideLoader();
+      render.hideLoadMoreButton();
+    } else {
+      render.showLoadMoreButton();
+    }
+  } catch {
+    iziToast.error({
+      title: 'Error',
+      message: 'Failed to fetch images. Please try again later.',
     });
+
+    if (currentPage < pages) {
+      render.showLoadMoreButton();
+    }
+  } finally {
+    render.hideLoader();
+  }
 });
