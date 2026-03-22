@@ -15,8 +15,11 @@ const api = axios.create({
 });
 
 export async function getImagesByQuery(query, page = 1) {
-  api.defaults.params.q = query;
-  api.defaults.params.page = page;
-  const response = await api.get('/');
+  const response = await api.get('/', {
+    params: {
+      q: query,
+      page: page,
+    },
+  });
   return response.data;
 }

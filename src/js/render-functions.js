@@ -6,23 +6,54 @@ const lightbox = new SimpleLightbox('.gallery a', {
   captionDelay: 250,
 });
 
+function getElement(selector) {
+  const element = document.querySelector(selector);
+
+  if (!element) {
+    console.error(`Expected element "${selector}" was not found in the DOM.`);
+    return null;
+  }
+
+  return element;
+}
+
 export function showLoader() {
-  const loader = document.querySelector('#loader');
+  const loader = getElement('#loader');
+
+  if (!loader) {
+    return;
+  }
+
   loader.classList.add('visible');
 }
 
 export function hideLoader() {
-  const loader = document.querySelector('#loader');
+  const loader = getElement('#loader');
+
+  if (!loader) {
+    return;
+  }
+
   loader.classList.remove('visible');
 }
 
 export function clearGallery() {
-  const gallery = document.querySelector('.gallery');
+  const gallery = getElement('.gallery');
+
+  if (!gallery) {
+    return;
+  }
+
   gallery.innerHTML = '';
 }
 
 export function renderImages(images) {
-  const gallery = document.querySelector('.gallery');
+  const gallery = getElement('.gallery');
+
+  if (!gallery) {
+    return;
+  }
+
   const galleryFragment = document.createDocumentFragment();
 
   images.forEach(element => {
@@ -59,11 +90,21 @@ export function renderImages(images) {
 }
 
 export function showLoadMoreButton() {
-  const loadMoreButton = document.querySelector('#load-more');
+  const loadMoreButton = getElement('#load-more');
+
+  if (!loadMoreButton) {
+    return;
+  }
+
   loadMoreButton.classList.add('visible');
 }
 
 export function hideLoadMoreButton() {
-  const loadMoreButton = document.querySelector('#load-more');
+  const loadMoreButton = getElement('#load-more');
+
+  if (!loadMoreButton) {
+    return;
+  }
+
   loadMoreButton.classList.remove('visible');
 }

@@ -25,105 +25,113 @@ function smoothScrollByGalleryCard() {
   });
 }
 
-form.addEventListener('submit', async event => {
-  event.preventDefault();
+if (!form) {
+  console.error('Expected .form element was not found in the DOM.');
+} else {
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
 
-  const query = event.currentTarget.elements['search-text'].value.trim();
+    const query = event.currentTarget.elements['search-text'].value.trim();
 
-  if (query === '') {
-    iziToast.warning({
-      title: 'Warning',
-      message: 'Please enter a search query.',
-    });
-    return;
-  }
-
-  currentQuery = query;
-  currentPage = 1;
-
-  render.clearGallery();
-  render.hideLoadMoreButton();
-  render.showLoader();
-
-  try {
-    const data = await pixabay.getImagesByQuery(currentQuery, currentPage);
-
-    if (data.hits.length === 0) {
-      iziToast.error({
-        title: 'Error',
-        message:
-          'Sorry, there are no images matching your search query. Please try again!',
+    if (query === '') {
+      iziToast.warning({
+        title: 'Warning',
+        message: 'Please enter a search query.',
       });
-      render.hideLoadMoreButton();
       return;
     }
 
-    pages = Math.ceil(data.totalHits / 15);
-    render.renderImages(data.hits);
+    currentQuery = query;
+    currentPage = 1;
 
-    if (currentPage < pages) {
-      render.showLoadMoreButton();
-    } else {
-      iziToast.info({
-        title: 'Info',
-        message: "We're sorry, but you've reached the end of search results.",
-      });
-      render.hideLoadMoreButton();
-    }
-  } catch {
-    iziToast.error({
-      title: 'Error',
-      message: 'Failed to fetch images. Please try again later.',
-    });
-  } finally {
-    render.hideLoader();
-  }
-
-  form.reset();
-});
-
-loadMoreButton.addEventListener('click', async () => {
-  if (currentPage >= pages) {
-    iziToast.info({
-      title: 'Info',
-      message: "We're sorry, but you've reached the end of search results.",
-    });
+    render.clearGallery();
     render.hideLoadMoreButton();
-    return;
-  }
+    render.showLoader();
 
-  const nextPage = currentPage + 1;
+    try {
+      const data = await pixabay.getImagesByQuery(currentQuery, currentPage);
 
-  render.hideLoadMoreButton();
-  render.showLoader();
+      if (data.hits.length === 0) {
+        iziToast.error({
+          title: 'Error',
+          message:
+            'Sorry, there are no images matching your search query. Please try again!',
+        });
+        render.hideLoadMoreButton();
+        return;
+      }
 
-  try {
-    const data = await pixabay.getImagesByQuery(currentQuery, nextPage);
+      pages = Math.ceil(data.totalHits / 15);
+      render.renderImages(data.hits);
 
-    currentPage = nextPage;
+      if (currentPage < pages) {
+        render.showLoadMoreButton();
+      } else {
+        iziToast.info({
+          title: 'Info',
+          message: "We're sorry, but you've reached the end of search results.",
+        });
+        render.hideLoadMoreButton();
+      }
+    } catch {
+      iziToast.error({
+        title: 'Error',
+        message: 'Failed to fetch images. Please try again later.',
+      });
+    } finally {
+      render.hideLoader();
+    }
 
-    render.renderImages(data.hits);
-    smoothScrollByGalleryCard();
+    form.reset();
+  });
+}
 
+if (!loadMoreButton) {
+  console.error('Expected #load-more element was not found in the DOM.');
+} else {
+  loadMoreButton.addEventListener('click', async () => {
     if (currentPage >= pages) {
       iziToast.info({
         title: 'Info',
         message: "We're sorry, but you've reached the end of search results.",
       });
       render.hideLoadMoreButton();
-    } else {
-      render.showLoadMoreButton();
+      return;
     }
-  } catch {
-    iziToast.error({
-      title: 'Error',
-      message: 'Failed to fetch images. Please try again later.',
-    });
 
-    if (currentPage < pages) {
-      render.showLoadMoreButton();
+    const nextPage = currentPage + 1;
+
+    render.hideLoadMoreButton();
+    render.showLoader();
+
+    try {
+      const data = await pixabay.getImagesByQuery(currentQuery, nextPage);
+
+      currentPage = nextPage;
+
+      render.renderImages(data.hits);
+      smoothScrollByGalleryCard();
+
+      if (currentPage >= pages) {
+        iziToast.info({
+          title: 'Info',
+          message: "We're sorry, but you've reached the end of search results.",
+        });
+        render.hideLoadMoreButton();
+      } else {
+        render.showLoadMoreButton();
+      }
+    } catch {
+      iziToast.error({
+        title: 'Error',
+        message: 'Failed to fetch images. Please try again later.',
+      });
+
+      if (currentPage < pages) {
+        render.showLoadMoreButton();
+      }
+    } finally {
+      render.hideLoader();
     }
-  } finally {
-    render.hideLoader();
-  }
-});
+  });
+}
